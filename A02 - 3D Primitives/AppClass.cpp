@@ -18,7 +18,7 @@ void Application::InitVariables(void)
 	m_pTube = new MyMesh();
 	m_pTube->GenerateTube(0.5f, 0.35f, 1.0f, 7, C_GREEN);
 	m_pSphere = new MyMesh();
-	m_pSphere->GenerateSphere(0.5f, 3, C_BLUE);
+	m_pSphere->GenerateSphere(0.5f, 8, C_BLUE);
 	m_pTorus = new MyMesh();
 	m_pTorus->GenerateTorus(0.5f, 0.30f, 7, 7, C_VIOLET);
 
@@ -101,16 +101,16 @@ void Application::Display(void)
 
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
-	
+
 	//render list call
 	m_uRenderCallCount = m_pMeshMngr->Render();
 
 	//clear the render list
 	m_pMeshMngr->ClearRenderList();
-	
+
 	//draw gui
 	DrawGUI();
-	
+
 	//end the current frame (internally swaps the front and back buffers)
 	m_pWindow->display();
 }

@@ -121,7 +121,7 @@ void MyMesh::Render(matrix4 a_mProjection, matrix4 a_mView, matrix4 a_mModel)
 {
 	// Use the buffer and shader
 	GLuint nShader = m_pShaderMngr->GetShaderID("Basic");
-	glUseProgram(nShader); 
+	glUseProgram(nShader);
 
 	//Bind the VAO of this object
 	glBindVertexArray(m_VAO);
@@ -133,11 +133,11 @@ void MyMesh::Render(matrix4 a_mProjection, matrix4 a_mView, matrix4 a_mModel)
 	//Final Projection of the Camera
 	matrix4 m4MVP = a_mProjection * a_mView * a_mModel;
 	glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(m4MVP));
-	
+
 	//Solid
 	glUniform3f(wire, -1.0f, -1.0f, -1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, m_uVertexCount);  
+	glDrawArrays(GL_TRIANGLES, 0, m_uVertexCount);
 
 	//Wire
 	glUniform3f(wire, 1.0f, 0.0f, 1.0f);
@@ -186,15 +186,15 @@ void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 	//|  |
 	//0--1
 
-	vector3 point0(-fValue,-fValue, fValue); //0
-	vector3 point1( fValue,-fValue, fValue); //1
-	vector3 point2( fValue, fValue, fValue); //2
+	vector3 point0(-fValue, -fValue, fValue); //0
+	vector3 point1(fValue, -fValue, fValue); //1
+	vector3 point2(fValue, fValue, fValue); //2
 	vector3 point3(-fValue, fValue, fValue); //3
 
-	vector3 point4(-fValue,-fValue,-fValue); //4
-	vector3 point5( fValue,-fValue,-fValue); //5
-	vector3 point6( fValue, fValue,-fValue); //6
-	vector3 point7(-fValue, fValue,-fValue); //7
+	vector3 point4(-fValue, -fValue, -fValue); //4
+	vector3 point5(fValue, -fValue, -fValue); //5
+	vector3 point6(fValue, fValue, -fValue); //6
+	vector3 point7(-fValue, fValue, -fValue); //7
 
 	//F
 	AddQuad(point0, point1, point3, point2);
@@ -275,8 +275,35 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//center of screen
+	vector3 center = vector3(0.0f);
+
+	//the angle of circle
+	float angle = (float)(PI * 2) / a_nSubdivisions;
+
+	//loop through for all tris
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		float currentAngle = angle * i;
+		float nextAngle = angle * (i + 1);
+
+		//find first point
+		float point1x = (cos(currentAngle));
+		float point1y = (sin(currentAngle));
+
+		//find second point
+		float point2x = (cos(nextAngle));
+		float point2y = (sin(nextAngle));
+
+		//set points
+		vector3 point1 = vector3(point1x, point1y, 0)*a_fRadius;
+		vector3 point2 = vector3(point2x, point2y, 0)*a_fRadius;
+
+		//Create Tris
+		AddTri(point1, point2, vector3(center[0], center[1], center[2] + a_fHeight));
+		AddTri(center, point2, point1);
+
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -299,8 +326,40 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//center of screen
+	vector3 center = vector3(0, 0, 0);
+	vector3 centerTop = vector3(0, 0, a_fHeight);
+
+	//the angle of the tri of the circle
+	float angle = (float)(PI * 2) / a_nSubdivisions;
+
+	//loop through for all tris
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		float currentAngle = angle * i;
+		float nextAngle = angle * (i + 1);
+		//find point 1
+		float point1x = (cos(currentAngle)); // cos * theta
+		float point1y = (sin(currentAngle)); // sin * theta
+
+		//point2
+		float point2x = (cos(nextAngle));
+		float point2y = (sin(nextAngle));
+
+		//set points
+		vector3 point1 = vector3(point1x, point1y, 0)*a_fRadius;
+		vector3 point2 = vector3(point2x, point2y, 0)*a_fRadius;
+
+		vector3 point1Top = vector3(point1[0], point1[1], point1[2] + a_fHeight);
+		vector3 point2Top = vector3(point2[0], point2[1], point2[2] + a_fHeight);
+
+		//Create Tris
+		AddTri(center, point2, point1);
+		AddQuad(point1, point2, point1Top, point2Top);
+		AddTri(point1Top, point2Top, centerTop);
+
+
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -329,15 +388,54 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	//center of screen
+	vector3 center = vector3(0, 0, 0);
+	vector3 centerTop = vector3(0, 0, a_fHeight);
+
+
+	float angle = (float)(PI * 2) / a_nSubdivisions;
+
+	//loop through for all tris
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//make some tris for real
+		float currentAngle = angle * i;
+		float nextAngle = angle * (i + 1);
+		//find point 1
+		float point1x = (cos(currentAngle)); // cos * theta
+		float point1y = (sin(currentAngle)); // sin * theta
+
+		//point2
+		float point2x = (cos(nextAngle));
+		float point2y = (sin(nextAngle));
+
+
+		//set points
+		vector3 point1OutL = vector3(point1x, point1y, 0)*a_fOuterRadius;
+		vector3 point2OutR = vector3(point2x, point2y, 0)*a_fOuterRadius;
+
+		vector3 point3InL = vector3(point1x, point1y, 0)*a_fInnerRadius;
+		vector3 point4InR = vector3(point2x, point2y, 0)*a_fInnerRadius;
+
+		//tops
+		vector3 point1Top = vector3(point1OutL[0], point1OutL[1], point1OutL[2] + a_fHeight);
+		vector3 point2Top = vector3(point2OutR[0], point2OutR[1], point2OutR[2] + a_fHeight);
+		vector3 point3Top = vector3(point3InL[0], point3InL[1], point3InL[2] + a_fHeight);
+		vector3 point4Top = vector3(point4InR[0], point4InR[1], point4InR[2] + a_fHeight);
+
+		//Create Tris
+		AddQuad(point3InL, point4InR, point1OutL, point2OutR);
+		AddQuad(point3Top, point4Top, point3InL, point4InR);
+		AddQuad(point1OutL, point2OutR, point1Top, point2Top);
+		AddQuad(point1Top, point2Top, point3Top, point4Top);
+	}
 	// -------------------------------
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
 }
-void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSubdivisionsA, int a_nSubdivisionsB, vector3 a_v3Color)
+void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSubdivisionsA, int a_nSubdivisionsB, vector3 a_v3Color)//Not doing
 {
 	if (a_fOuterRadius < 0.01f)
 		a_fOuterRadius = 0.01f;
@@ -361,7 +459,8 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Release();
 	Init();
 
-	// Replace this with your code
+	//Replaced with cube
+
 	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
 	// -------------------------------
 
@@ -377,6 +476,7 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	//Sets minimum and maximum of subdivisions
 	if (a_nSubdivisions < 1)
 	{
+		
 		GenerateCube(a_fRadius * 2.0f, a_v3Color);
 		return;
 	}
@@ -386,9 +486,46 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	//Nested for loop to set through each subdivision and make triangles for the set of angles
+	for (size_t i = 0; i < a_nSubdivisions; i++)
+	{
+		float angle1 = ((float)i / (float)a_nSubdivisions)*PI;//current 
+		float angle2 = ((float)(i + 1) / (float)a_nSubdivisions)*PI;//next
+
+		for (size_t j = 0; j < a_nSubdivisions; j++)
+		{
+			float angle3 = ((float)j / (float)a_nSubdivisions) * 2 * PI;//current
+			float angle4 = ((float)(j + 1) / (float)a_nSubdivisions) * 2 * PI;//next
+
+			//spherical coordinates
+			vector3 vertex1 = vector3(sin(angle1)*cos(angle3), sin(angle1)*sin(angle3), cos(angle1))*a_fRadius;
+
+			vector3 vertex2 = vector3(sin(angle1)*cos(angle4), sin(angle1)*sin(angle4), cos(angle1))*a_fRadius;
+
+			vector3 vertex3 = vector3(sin(angle2)*cos(angle4), sin(angle2)*sin(angle4), cos(angle2))*a_fRadius;
+
+			vector3 vertex4 = vector3(sin(angle2)*cos(angle3), sin(angle2)*sin(angle3), cos(angle2))*a_fRadius;
+
+			//Draw the circle starts from top then builds down
+			if (i == 0) {
+				//top
+				AddTri(vertex4, vertex3, vertex1);
+			}
+			else if ((i + 1) == a_nSubdivisions) {
+				//bottom
+				AddTri(vertex2, vertex1, vertex3);
+			}
+			else
+			{
+				//middle, similar to Cylinder
+				AddTri(vertex4, vertex2, vertex1);
+				AddTri(vertex4, vertex3, vertex2);
+				
+			}
+		}
+
+	}
+
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
