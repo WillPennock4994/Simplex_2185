@@ -78,7 +78,7 @@ void Simplex::MyCamera::Swap(MyCamera & other)
 	std::swap(m_v3Position, other.m_v3Position);
 	std::swap(m_v3Target, other.m_v3Target);
 	std::swap(m_v3Above, other.m_v3Above);
-	
+
 	std::swap(m_bPerspective, other.m_bPerspective);
 
 	std::swap(m_fFOV, other.m_fFOV);
@@ -98,11 +98,60 @@ Simplex::MyCamera::~MyCamera(void)
 	Release();
 }
 
+void Simplex::MyCamera::rotateCamera(float fAngleX, float fAngleY)
+{
+	//Sets angles
+	SetPitch(glm::angleAxis(glm::radians(-fAngleX), AXIS_X));
+	SetYaw(glm::angleAxis(glm::radians(fAngleY), AXIS_Y));
+
+	//Sets orientation
+	SetOrientation(GetOrientation() * GetYaw() * GetPitch());
+
+	//Set new target
+	SetTarget(GetPosition() + glm::rotate(GetOrientation(), -AXIS_Z));
+
+	//Calculate new updated view matrix
+	CalculateViewMatrix();
+}
+
+
+
+glm::quat Simplex::MyCamera::GetYaw(void)//Getter
+{
+	return m_qYaw;
+}
+
+void Simplex::MyCamera::SetYaw(glm::quat a_qYaw)
+{
+	m_qYaw = a_qYaw;
+}
+
+glm::quat Simplex::MyCamera::GetPitch(void)//Getter
+{
+	return m_qPitch;
+}
+
+void Simplex::MyCamera::SetPitch(glm::quat a_qPitch)
+{
+	m_qPitch = a_qPitch;
+}
+
+glm::quat Simplex::MyCamera::GetOrientation(void)//Getter
+{
+	return m_qOrientation;
+}
+
+void Simplex::MyCamera::SetOrientation(glm::quat a_qOrientation)
+{
+	m_qOrientation = a_qOrientation;
+}
+
 void Simplex::MyCamera::ResetCamera(void)
 {
 	m_v3Position = vector3(0.0f, 0.0f, 10.0f); //Where my camera is located
 	m_v3Target = vector3(0.0f, 0.0f, 0.0f); //What I'm looking at
 	m_v3Above = vector3(0.0f, 1.0f, 0.0f); //What is above the camera
+	m_qOrientation = quaternion();
 
 	m_bPerspective = true; //perspective view? False is Orthographic
 
@@ -124,7 +173,7 @@ void Simplex::MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3
 	m_v3Target = a_v3Target;
 
 	m_v3Above = a_v3Position + glm::normalize(a_v3Upward);
-	
+
 	//Calculate the Matrix
 	CalculateProjectionMatrix();
 }
@@ -152,11 +201,32 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 
 void MyCamera::MoveForward(float a_fDistance)
 {
-	//The following is just an example and does not take in account the forward vector (AKA view vector)
-	m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);
+	//Calculate the Forward
+	vector3 forward = m_v3Target - m_v3Position;
+	forward = glm::normalize(forward);
+
+	m_v3Position += forward * a_fDistance;
+	m_v3Target += forward * a_fDistance;
+	m_v3Above += forward * a_fDistance;
 }
 
-void MyCamera::MoveVertical(float a_fDistance){}//Needs to be defined
-void MyCamera::MoveSideways(float a_fDistance){}//Needs to be defined
+void MyCamera::MoveVertical(float a_fDistance)
+{
+	//Calculate the Vertical
+	vector3 vertical = m_v3Above - m_v3Position;
+	vertical = glm::normalize(vertical);
+
+	m_v3Position += vertical * a_fDistance;
+	m_v3Target += vertical * a_fDistance;
+	m_v3Above += vertical * a_fDistance;
+}
+void MyCamera::MoveSideways(float a_fDistance)
+{
+	//Calculate the Horizontal
+	vector3 horizontal = glm::cross(m_v3Target - m_v3Position, m_v3Above - m_v3Position);
+	horizontal = glm::normalize(horizontal);
+
+	m_v3Position += horizontal * a_fDistance;
+	m_v3Target += horizontal * a_fDistance;
+	m_v3Above += horizontal * a_fDistance;
+}
