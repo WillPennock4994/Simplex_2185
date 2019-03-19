@@ -3,14 +3,14 @@ using namespace Simplex;
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Will Pennock - Wxp9803@rit.edu";
 
 	//Set the position and target of the camera
-	m_pCameraMngr->SetPositionTargetAndUpward(	vector3(0.0f, 3.0f, 13.0f), //Position
-											vector3(0.0f, 3.0f, 12.0f),	//Target
-											AXIS_Y );					//Up
+	m_pCameraMngr->SetPositionTargetAndUpward(vector3(0.0f, 3.0f, 13.0f), //Position
+		vector3(0.0f, 3.0f, 12.0f),	//Target
+		AXIS_Y);					//Up
 
-	//Set the position of the light
+//Set the position of the light
 	m_pLightMngr->SetPosition(vector3(10.0f));
 
 	//Initialize models
@@ -23,7 +23,7 @@ void Application::InitVariables(void)
 	//steve
 	m_pSteve = new Model();
 	m_pSteve->Load("Minecraft\\Steve.obj");
-	m_pSteveRB= new MyRigidBody(m_pSteve->GetVertexList());
+	m_pSteveRB = new MyRigidBody(m_pSteve->GetVertexList());
 }
 void Application::Update(void)
 {
@@ -41,15 +41,15 @@ void Application::Update(void)
 	m_pCreeper->SetModelMatrix(mCreeper);
 	m_pCreeperRB->SetModelMatrix(mCreeper);
 	m_pMeshMngr->AddAxisToRenderList(mCreeper);
-	
+
 	//Set model matrix to Steve
 	matrix4 mSteve = glm::translate(vector3(2.25f, 0.0f, 0.0f)) * glm::rotate(IDENTITY_M4, glm::radians(-55.0f), AXIS_Z);
 	m_pSteve->SetModelMatrix(mSteve);
 	m_pSteveRB->SetModelMatrix(mSteve);
 	m_pMeshMngr->AddAxisToRenderList(mSteve);
-	
+
 	bool bColliding = m_pCreeperRB->IsColliding(m_pSteveRB);
-	
+
 	m_pCreeper->AddToRenderList();
 	m_pCreeperRB->AddToRenderList();
 
@@ -57,7 +57,7 @@ void Application::Update(void)
 	m_pSteveRB->AddToRenderList();
 
 	m_pMeshMngr->Print("Colliding: ");
-	if(bColliding)
+	if (bColliding)
 		m_pMeshMngr->PrintLine("YES!", C_RED);
 	else
 		m_pMeshMngr->PrintLine("no", C_YELLOW);
@@ -72,16 +72,16 @@ void Application::Display(void)
 
 	//Add skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
-	
+
 	//render list call
 	m_uRenderCallCount = m_pMeshMngr->Render();
 
 	//clear the render list
 	m_pMeshMngr->ClearRenderList();
-		
+
 	//draw gui
 	DrawGUI();
-	
+
 	//end the current frame (internally swaps the front and back buffers)
 	m_pWindow->display();
 }
@@ -98,7 +98,7 @@ void Application::Release(void)
 
 	//release the rigid body for the model
 	SafeDelete(m_pSteveRB);
-	
+
 	//release GUI
 	ShutdownGUI();
 }

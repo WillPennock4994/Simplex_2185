@@ -71,7 +71,7 @@ void MyRigidBody::SetColorNotColliding(vector3 a_v3Color) { m_v3ColorNotCollidin
 vector3 MyRigidBody::GetCenterLocal(void) { return m_v3Center; }
 vector3 MyRigidBody::GetMinLocal(void) { return m_v3MinL; }
 vector3 MyRigidBody::GetMaxLocal(void) { return m_v3MaxL; }
-vector3 MyRigidBody::GetCenterGlobal(void){	return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
+vector3 MyRigidBody::GetCenterGlobal(void) { return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
 vector3 MyRigidBody::GetMinGlobal(void) { return m_v3MinG; }
 vector3 MyRigidBody::GetMaxGlobal(void) { return m_v3MaxG; }
 vector3 MyRigidBody::GetHalfWidth(void) { return m_v3HalfWidth; }
@@ -83,10 +83,27 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 		return;
 
 	m_m4ToWorld = a_m4ModelMatrix;
-	
+
 	//your code goes here---------------------
-	m_v3MinG = m_v3MinL;
-	m_v3MaxG = m_v3MaxL;
+	std::vector<vector3> locPoints;
+	locPoints.push_back(vector3(m_v3MinL.x, m_v3MinL.y, m_v3MinL.z)); 
+	locPoints.push_back(vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z)); 
+	locPoints.push_back(vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MinL.z)); 
+	locPoints.push_back(vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MinL.z)); 
+	locPoints.push_back(vector3(m_v3MinL.x, m_v3MinL.y, m_v3MaxL.z)); 
+	locPoints.push_back(vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MaxL.z));
+	locPoints.push_back(vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MaxL.z));
+	locPoints.push_back(vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MaxL.z));
+
+	//change local points to global, multiply by rotation matrix
+	for (uint i = 0; i < locPoints.size(); i++) {
+		locPoints[i] = static_cast<vector3>(m_m4ToWorld * vector4(locPoints[i], 1.0f));
+	}
+
+	//set globasl
+	MyRigidBody tempObj(locPoints);
+	m_v3MinG = tempObj.m_v3MinG;
+	m_v3MaxG = tempObj.m_v3MaxG;
 	//----------------------------------------
 
 	//we calculate the distance between min and max vectors
