@@ -71,7 +71,7 @@ void MyRigidBody::SetColorNotColliding(vector3 a_v3Color) { m_v3ColorNotCollidin
 vector3 MyRigidBody::GetCenterLocal(void) { return m_v3Center; }
 vector3 MyRigidBody::GetMinLocal(void) { return m_v3MinL; }
 vector3 MyRigidBody::GetMaxLocal(void) { return m_v3MaxL; }
-vector3 MyRigidBody::GetCenterGlobal(void){	return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
+vector3 MyRigidBody::GetCenterGlobal(void) { return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
 vector3 MyRigidBody::GetMinGlobal(void) { return m_v3MinG; }
 vector3 MyRigidBody::GetMaxGlobal(void) { return m_v3MaxG; }
 vector3 MyRigidBody::GetHalfWidth(void) { return m_v3HalfWidth; }
@@ -228,11 +228,11 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 {
 	//check if spheres are colliding as pre-test
 	bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
-	
+
 	//if they are colliding check the SAT
 	if (bColliding)
 	{
-		if(SAT(a_pOther) != eSATResults::SAT_NONE)
+		if (SAT(a_pOther) != eSATResults::SAT_NONE)
 			bColliding = false;// reset to false
 	}
 
@@ -276,17 +276,100 @@ void MyRigidBody::AddToRenderList(void)
 
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
-	/*
-	Your code goes here instead of this comment;
+	float temp1;
+	float temp2;
+	matrix3 R;
+	matrix3 AbsR;
 
-	For this method, if there is an axis that separates the two objects
-	then the return will be different than 0; 1 for any separating axis
-	is ok if you are not going for the extra credit, if you could not
-	find a separating axis you need to return 0, there is an enum in
-	Simplex that might help you [eSATResults] feel free to use it.
-	(eSATResults::SAT_NONE has a value of 0)
-	*/
+	// set orientation and halfwidth of both OOBs
+	matrix3 orientation1 = static_cast<matrix3>(this->GetModelMatrix());
+	matrix3 orientation2 = static_cast<matrix3>(a_pOther->GetModelMatrix());
+	vector3 halfwidth1 = this->GetHalfWidth();
+	vector3 halfwidth2 = a_pOther->GetHalfWidth();
 
-	//there is no axis test that separates this two objects
+	// Sets rotation matrix
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			R[i][j] = glm::dot(orientation1[i], orientation2[j]);
+		}
+	}
+
+	// Set the translation vector using the center points of the rigidbodies
+	vector3 tVector = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+
+	// Sets the translation into a_pOther's coordinate space
+	tVector = vector3(glm::dot(tVector, orientation1[0]), glm::dot(tVector, orientation1[1]), glm::dot(tVector, orientation1[2]));
+
+	// Calculate the common subexpressions of the rigidbodies. 
+	// Happens when the two are parallel
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			AbsR[i][j] = abs(R[i][j]) + FLT_EPSILON;
+		}
+	}
+
+	// Begin checking for axis that separates two objects, return 1 if one is found (no collision)
+	// A represents the current object, B represents a_pOther 
+
+	// Check Ax, Ay, and Az axises
+	for (int i = 0; i < 3; i++) {
+		temp1 = halfwidth1[i];
+		temp2 = halfwidth2[0] * AbsR[i][0] + halfwidth2[1] * AbsR[i][1] + halfwidth2[2] * AbsR[i][2];
+		if (abs(tVector[i]) > temp1 + temp2) return 1;
+	}
+
+	// Check Bx, By, and Bz axises
+	for (int i = 0; i < 3; i++) {
+		temp1 = halfwidth1[0] * AbsR[0][i] + halfwidth1[1] * AbsR[1][i] + halfwidth1[2] * AbsR[2][i];
+		temp2 = halfwidth2[i];
+		if (abs(tVector[0] * R[0][i] + tVector[1] * R[1][i] + tVector[2] * R[2][i]) > temp1 + temp2) return 1;
+	}
+
+	// Check axis A0 x B0 (cross product)
+	temp1 = halfwidth1[1] * AbsR[2][0] + halfwidth1[2] * AbsR[1][0];
+	temp2 = halfwidth2[1] * AbsR[0][2] + halfwidth2[2] * AbsR[0][1];
+	if (abs(tVector[2] * R[1][0] - tVector[1] * R[2][0]) > temp1 + temp2) return 1;
+
+	// Check axis A0 x B1 (cross product)
+	temp1 = halfwidth1[1] * AbsR[2][1] + halfwidth1[2] * AbsR[1][1];
+	temp2 = halfwidth2[0] * AbsR[0][2] + halfwidth2[2] * AbsR[0][0];
+	if (abs(tVector[2] * R[1][1] - tVector[1] * R[2][1]) > temp1 + temp2) return 1;
+
+	// Check axis A0 x B2 (cross product)
+	temp1 = halfwidth1[1] * AbsR[2][2] + halfwidth1[2] * AbsR[1][2];
+	temp2 = halfwidth2[0] * AbsR[0][1] + halfwidth2[1] * AbsR[0][0];
+	if (abs(tVector[2] * R[1][2] - tVector[1] * R[2][2]) > temp1 + temp2) return 1;
+
+	// Check axis A1 x B0 (cross product)
+	temp1 = halfwidth1[0] * AbsR[2][0] + halfwidth1[2] * AbsR[0][0];
+	temp2 = halfwidth2[1] * AbsR[1][2] + halfwidth2[2] * AbsR[1][1];
+	if (abs(tVector[0] * R[2][0] - tVector[2] * R[0][0]) > temp1 + temp2) return 1;
+
+	// Check axis A1 x B1 (cross product)
+	temp1 = halfwidth1[0] * AbsR[2][1] + halfwidth1[2] * AbsR[0][1];
+	temp2 = halfwidth2[0] * AbsR[1][2] + halfwidth2[2] * AbsR[1][0];
+	if (abs(tVector[0] * R[2][1] - tVector[2] * R[0][1]) > temp1 + temp2) return 1;
+
+	// Check axis A1 x B2 (cross product)
+	temp1 = halfwidth1[0] * AbsR[2][2] + halfwidth1[2] * AbsR[0][2];
+	temp2 = halfwidth2[0] * AbsR[1][1] + halfwidth2[1] * AbsR[1][0];
+	if (abs(tVector[0] * R[2][2] - tVector[2] * R[0][2]) > temp1 + temp2) return 1;
+
+	// Check axis A2 x B0 (cross product)
+	temp1 = halfwidth1[0] * AbsR[1][0] + halfwidth1[1] * AbsR[0][0];
+	temp2 = halfwidth2[1] * AbsR[2][2] + halfwidth2[2] * AbsR[2][1];
+	if (abs(tVector[1] * R[0][0] - tVector[0] * R[1][0]) > temp1 + temp2) return 1;
+
+	// Check axis A2 x B1 (cross product)
+	temp1 = halfwidth1[0] * AbsR[1][1] + halfwidth1[1] * AbsR[0][1];
+	temp2 = halfwidth2[0] * AbsR[2][2] + halfwidth2[2] * AbsR[2][0];
+	if (abs(tVector[1] * R[0][1] - tVector[0] * R[1][1]) > temp1 + temp2) return 1;
+
+	// Check axis A2 x B2 (cross product)
+	temp1 = halfwidth1[0] * AbsR[1][2] + halfwidth1[1] * AbsR[0][2];
+	temp2 = halfwidth2[0] * AbsR[2][1] + halfwidth2[1] * AbsR[2][0];
+	if (abs(tVector[1] * R[0][2] - tVector[0] * R[1][2]) > temp1 + temp2) return 1;
+
+	// There is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
 }
