@@ -30,6 +30,7 @@ void Application::InitVariables(void)
 		}
 	}
 	m_uOctantLevels = 1;
+	m_pRoot = new MyOctant(m_uOctantLevels, 5);
 	m_pEntityMngr->Update();
 }
 void Application::Update(void)
@@ -42,7 +43,7 @@ void Application::Update(void)
 
 	//Is the first person camera active?
 	CameraRotation();
-	
+
 	//Update Entity Manager
 	m_pEntityMngr->Update();
 
@@ -55,25 +56,31 @@ void Application::Display(void)
 	ClearScreen();
 
 	//display octree
-	//m_pRoot->Display();
-	
+	if (m_uOctantID == -1)
+		m_pRoot->Display();
+	else
+		m_pRoot->Display(m_uOctantID);
+
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
-	
+
 	//render list call
 	m_uRenderCallCount = m_pMeshMngr->Render();
 
 	//clear the render list
 	m_pMeshMngr->ClearRenderList();
-	
+
 	//draw gui,
 	DrawGUI();
-	
+
 	//end the current frame (internally swaps the front and back buffers)
 	m_pWindow->display();
 }
 void Application::Release(void)
 {
+	// release the octree
+	SafeDelete(m_pRoot);
+
 	//release GUI
 	ShutdownGUI();
 }

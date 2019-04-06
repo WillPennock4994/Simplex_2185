@@ -39,7 +39,7 @@ void Application::DrawGUI(void)
 			ImGui::Text("FrameRate: %.2f [FPS] -> %.3f [ms/frame]\n",
 				ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 			ImGui::Text("Levels in Octree: %d\n", m_uOctantLevels);
-			//ImGui::Text("Octants: %d\n", m_pRoot->GetOctantCount());
+			ImGui::Text("Octants: %d\n", m_pRoot->GetOctantCount());
 			ImGui::Text("Objects: %d\n", m_uObjects);
 			ImGui::Separator();
 			ImGui::Text("Control:\n");
@@ -288,7 +288,7 @@ void Application::NewFrame()
 	io.DeltaTime = fDelta;
 	gui.m_dTimeTotal += fDelta;
 
-	
+
 	// Start the frame
 	ImGui::NewFrame();
 }
@@ -316,7 +316,7 @@ void Application::InitIMGUI(void)
 	io.KeyMap[ImGuiKey_X] = sf::Keyboard::X;
 	io.KeyMap[ImGuiKey_Y] = sf::Keyboard::Y;
 	io.KeyMap[ImGuiKey_Z] = sf::Keyboard::Z;
-		
+
 	// We are using the alternative; set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
 	io.RenderDrawListsFn = NULL; // = RenderDrawListsFunction;
 	io.SetClipboardTextFn = NULL;
